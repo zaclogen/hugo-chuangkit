@@ -193,7 +193,7 @@ kcwm.xyz {
 
 [^1]:https://caddyserver.com/
 [^2]:https://caddyserver.com/docs
-[^3]:[https://medium.com/@jestem/caddy%E5%AE%98%E6%96%B9%E8%84%9A%E6%9C%AC%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8-1e6d25154804](https://medium.com/@jestem/caddy官方脚本一键安装与使用-1e6d25154804)
+[^3]:[caddy官方脚本一键安装与使用](https://medium.com/@jestem/caddy官方脚本一键安装与使用-1e6d25154804)
 [^4]: https://github.com/hacdias/caddy-service/blob/master/README.md
 [^5]: [Caddy+Hugo双GO组合并实现github的webhook钩子推送](https://mile3033.github.io/archives/2018/0526/#1-%E5%AE%89%E8%A3%85caddy)
 
