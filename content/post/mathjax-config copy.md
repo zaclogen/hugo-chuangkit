@@ -3,6 +3,8 @@ title: Mathjax配置
 date: 2019-09-17
 math: true
 ---
+
+
 # 1 使用Mathjax
 ## 1.1 Mathjax的CDN服务
 - [Staticfile CDN](/https://www.staticfile.org/)

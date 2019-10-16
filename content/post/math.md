@@ -36,4 +36,3 @@ $$\begin{array}{cc}
 1\$和2\$
 # video
 
-{{< video library="1" src="economy.mp4" controls="yes" >}}
