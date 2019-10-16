@@ -1,5 +1,5 @@
 ---
-title: 部署Hugo到服务端
+title: Hugo自动化部署
 math: true
 # highlight: true
 share: false
@@ -8,23 +8,199 @@ slides: example-slides.md
 date: 2019-09-19
 # markup: mmark
 ---
-# 本地
-## 安装
-### ubuntu
-到这里选择合适的deb包 https://github.com/gohugoio/hugo/releases
-```bash
-wget https://github.com/gohugoio/hugo/releases/download/v0.58.1/hugo_extended_0.58.1_Linux-64bit.deb
+[TOC]
+
+# 1. 环境
+
+## 1.1 本地: window 10 x64
+
+- git
+- hugo-extended
+- ssh
+
+## 1.2 服务端: ubuntu18.06 x64
+
+- git
+
+- hugo-extended
+
+  
+
+  ```bash
+  # 获取合适的deb包
+  wget https://github.com/gohugoio/hugo/releases/download/v0.58.1/hugo_extended_0.58.1_Linux-64bit.deb
+  # 安装
+  sudo dpkg -i hugo_extended_0.58.1_Linux-64bit.deb
+  # 查看版本
+  hugo version
+  ```
+
+- caddy (http.git, hook.service插件)
+
+  - caddy介绍 [^1]
+  - caddy文档[^2]
+  - caddy一键安装教程[^3]
+
+  ```bash
+  # 带插件安装(http.git,dns,hook.service)
+  curl https://getcaddy.com | bash -s personal http.git,dns,hook.service
+  # /etc/caddy中创建配置文件
+  sudo mkdir /etc/caddy
+  sudo touch /etc/caddy/Caddyfile
+  # 配置ssl证书目录
+  sudo mkdir /etc/ssl/caddy
+  # 配置网站目录
+  sudo mkdir /var/www/kcwm.xyz
+  # 提高网站安全性, 配置上述文件(夹)用户(组)权限
+  sudo chown -R root:www-data /etc/caddy
+  sudo chown -R www-data:root /etc/ssl/caddy
+  sudo chmod 0770 /etc/ssl/caddy
+  sudo chown www-data:www-data /var/www/kcwm.xyz
+  ```
+
+  - 安装caddy.service[^4]
+
+    ```bash
+    caddy -service install -agree -email kongchuang@zju.edu.cn -conf /etc/caddy/Caddyfile
+    # 启动caddy
+    caddy -service start
+    # 卸载caddy.service
+    caddy -service uninstall
+    ```
+
+## 1.3 github repo: zaclogen/hugo-chuangkit.git
+
+# 2 配置
+
+## 2.1 webhook
+
+1. 打开Github页面, 进入项目->设置->webhook->Add Webhook
+
+2. 添加webhook,PayloadURL填写/webhook地址`http://kcwm.xyz/webhooks`. **注意**: 这个在caddy使用默认80端口的时候才好用
+3. content-type选json secret
+4. 口令填写`nicetry`(和Caddyfile中的保持一致) 其他保持默认即可
+
+## 2.2 caddy
+
+- 修改`/etc/caddy/Caddyfile`为:[^5]
+
 ```
-安装
-```bash
- sudo dpkg -i hugo_extended_0.58.1_Linux-64bit.deb
+kcwm.xyz {
+        gzip
+        tls kongchuang@zju.edu.cn
+        git github.com/zaclogen/hugo-chuangkit . {
+                repo github.com/zaclogen/hugo-chuangkit
+                path /var/www/hugo-chuangkit
+                # nicetry为github中webhook的密码
+                hook /webhooks nicetry
+                hook_type github
+                then hugo --destination=/var/www/kcwm.xyz
+                interval 600
+                }
+        root /var/www/kcwm.xyz
+}
 ```
-查看版本
-```bash
-hugo version
-```
-# 服务端
+
+- `/etc/systemd/system/caddy.service`增加
+
+  ```
+  [Service]
+  LimitNOFILE=8192
+  ```
+
+**注意**: 
+
+1. 记得80, 443端口放行
+
+2. 报错时, 可能是文件夹和权限问题
+
+   ```bash
+   # 创建文件夹
+   mkdir /var/www/hugo-chuangkit
+   # 赋予权限
+   sudo chown -R root:www-data /var/www/hugo-chuangkit
+   ```
+
+# 3 管理
+
+## 3.1 本地
+
+- hugo 使用(首先进入项目根目录)
+
+  ```bash
+  # 实时编译生成public文件夹
+  hugo -w
+  # 实时编译, hugo作服务器, 绑定80端口
+  hugo server --port=80  --appendPort=false
+  ```
+
+- git
+
+  - 新建仓库时
+
+  ```bash
+  git init
+  echo "Hello world" >> README.md
+  git add .
+  git commit -m "first Test"
+  git remote add origin https://github.com/zaclogen/[NEWREPO.GIT]
+  git push -u origin master
+  ```
+
+  - 已有仓库
+
+    ```bash
+    git clone https://github.com/zaclogen/hugo-chuangkit.git
+    # 文件操作
+    git add .
+    git commit -m "comment"
+    git push -u origin master
+    ```
+
+## 3.2 服务端
+
+- caddy的管理命令
+
+  - 修改`/etc/systemd/system/caddy.service`后
+
+    ```bash
+    systemctl daemon-reload
+    ```
+
+  - 修改`/etc/caddy/Caddyfile`后
+
+    ```bash
+    # 重启
+    caddy -service restart
+    # 启动
+    caddy -service start
+    # 关闭
+    caddy -service stop
+    # 查看运行状态
+    systemctl status caddy.servic
+    ```
+
+  - 通过systemd管理caddy
+
+    ```bash
+    sudo systemctl start caddy.service
+    sudo systemctl stop caddy.service
+    sudo systemctl restart caddy.service
+    sudo systemctl reload caddy.service
+    # 查看运行状态
+    systemctl status caddy.servic
+    ```
+
+[^1]:https://caddyserver.com/
+[^2]:https://caddyserver.com/docs
+[^3]:[https://medium.com/@jestem/caddy%E5%AE%98%E6%96%B9%E8%84%9A%E6%9C%AC%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8-1e6d25154804](https://medium.com/@jestem/caddy官方脚本一键安装与使用-1e6d25154804)
+[^4]: https://github.com/hacdias/caddy-service/blob/master/README.md
+[^5]: [Caddy+Hugo双GO组合并实现github的webhook钩子推送]([https://mile3033.github.io/archives/2018/0526/#1-%E5%AE%89%E8%A3%85caddy](https://mile3033.github.io/archives/2018/0526/#1-安装caddy))
+
+# 4 过时方案
+
 ## 权衡
+
 ### 不打算使用:
 - [x] Github: git方便; 速度慢; 数据安全性;
 - [x] Netlify: git方便; 同步速度快; 速度慢; 数据安全性;
