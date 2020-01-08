@@ -35,14 +35,15 @@
 [[main]]
   name = "文档"
   url = "official-docs/"
-[[main]]
-  name = "su2"
-  url = "https://su2.kcwm.xyz"
   weight = 60
+[[main]]
+  name = "SU2"
+  url = "https://su2.kcwm.xyz"
+  weight = 70
 [[main]]
   name = "NextCloud"
   url = "http://kcwm.xyz:801"
-  weight = 70
+  weight = 80
 # [[main]]
 #   name = "幻灯片"
 #   url = "slides/"
